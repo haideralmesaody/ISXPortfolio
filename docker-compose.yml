@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend/data:/app/data
+    env_file:
+      - backend/.env
+    environment:
+      - GIN_MODE=release
+    command: sh -c "env && ./main"
+
+volumes:
+  sqlite_data:
+    driver: local 
