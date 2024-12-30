@@ -1,7 +1,7 @@
 # Full-Stack Development Document for a Golang Web Application
 
 ## Overview
-This document provides a step-by-step guide for building a full-stack web application with a Golang backend, a React frontend, and SQLite as the lightweight database. The app will use Google Auth for user registration and login and will be containerized with Docker.
+This document provides a step-by-step guide for building a full-stack web application with a Golang backend, a Flutter frontend, and SQLite as the lightweight database. The app will use Google Auth for user registration and login and will be containerized with Docker.
 
 ---
 
@@ -10,10 +10,10 @@ This document provides a step-by-step guide for building a full-stack web applic
 | Component     | Technology          | Reason                                                                 |
 |---------------|---------------------|------------------------------------------------------------------------|
 | Backend       | Golang              | High performance, scalability, and robust support for APIs.           |
-| Frontend      | React               | Flexible, ecosystem-rich, and compatible with React Native for mobile.|
+| Frontend      | Flutter             | Cross-platform, high-performance, and native-like UI for web and mobile.|
 | Database      | SQLite              | Lightweight, file-based, and ideal for small to medium-sized apps.    |
 | Authentication| Google OAuth2       | Industry-standard authentication for easy user registration/login.     |
-| Charting      | D3.js or Chart.js   | Advanced, interactive visualizations.                                 |
+| Charting      | Flutter Packages    | Advanced, interactive visualizations using packages like `fl_chart`.  |
 | Containerization | Docker           | Simplifies setup, deployment, and environment consistency.            |
 
 ---
@@ -28,37 +28,17 @@ project/
 │   ├── models/
 │   └── config/
 ├── frontend/
-│   ├── public/
-│   ├── src/
+│   ├── lib/
 │   │   ├── components/
-│   │   ├── pages/
-│   │   ├── hooks/
-│   │   └── App.js
+│   │   ├── screens/
+│   │   ├── services/
+│   │   └── main.dart
+│   ├── pubspec.yaml
+│   ├── android/
+│   ├── ios/
+│   ├── web/
+│   └── test/
 ├── docker-compose.yml
-
-### 3. Create `docker-compose.yml`
-```yaml
-version: '3.8'
-
-services:
-  backend:
-    build:
-      context: ./backend
-    ports:
-      - "8080:8080"
-    volumes:
-      - sqlite_data:/app/data
-
-  frontend:
-    build:
-      context: ./frontend
-    ports:
-      - "3000:3000"
-
-volumes:
-  sqlite_data:
-    driver: local
-```
 └── Dockerfile
 ```
 
@@ -71,7 +51,7 @@ volumes:
 mkdir backend
 cd backend
 go mod init isxportfolio-backend
-go get github.com/gin-gonic/gin@v1.8.1
+go get -u github.com/gin-gonic/gin
 ```
 
 ### 2. Directory Structure
@@ -159,54 +139,102 @@ func InitDB() {
 
 ---
 
-## Frontend Setup (React)
+## Frontend Setup (Flutter)
 
 ### 1. Initialize Project
 ```bash
-npx create-react-app frontend
+flutter create frontend
 cd frontend
-npm install axios react-google-login chart.js react-chartjs-2
 ```
 
 ### 2. Directory Structure
 ```plaintext
 frontend/
-├── src/
+├── lib/
 │   ├── components/
-│   │   ├── Auth.js
-│   │   ├── Portfolio.js
-│   │   └── NewsFeed.js
-│   ├── hooks/
-│   ├── App.js
+│   ├── screens/
+│   ├── services/
+│   └── main.dart
+├── pubspec.yaml
+├── android/
+├── ios/
+├── web/
+└── test/
 ```
 
-### 3. Example `Auth.js`
-```javascript
-import React from "react";
-import { GoogleLogin } from "react-google-login";
+### 3. Update `pubspec.yaml`
+Add dependencies for HTTP requests and Google Sign-In.
+```yaml
+dependencies:
+  flutter:
+    sdk: flutter
+  google_sign_in: ^5.4.2
+  http: ^0.15.0
+  fl_chart: ^0.40.0
+```
 
-const Auth = () => {
-  const handleSuccess = (response) => {
-    console.log(response);
-    // Send token to backend
-  };
+### 4. Example `main.dart`
+```dart
+import 'package:flutter/material.dart';
+import 'screens/login_screen.dart';
 
-  const handleFailure = (response) => {
-    console.error(response);
-  };
+void main() {
+  runApp(const MyApp());
+}
 
-  return (
-    <GoogleLogin
-      clientId="YOUR_GOOGLE_CLIENT_ID"
-      buttonText="Login with Google"
-      onSuccess={handleSuccess}
-      onFailure={handleFailure}
-      cookiePolicy={'single_host_origin'}
-    />
-  );
-};
+class MyApp extends StatelessWidget {
+  const MyApp({Key? key}) : super(key: key);
 
-export default Auth;
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'ISX Portfolio',
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+      ),
+      home: const LoginScreen(),
+    );
+  }
+}
+```
+
+### 5. Example Login Screen (`screens/login_screen.dart`)
+```dart
+import 'package:flutter/material.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+
+class LoginScreen extends StatefulWidget {
+  const LoginScreen({Key? key}) : super(key: key);
+
+  @override
+  State<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
+  final GoogleSignIn _googleSignIn = GoogleSignIn();
+
+  Future<void> _handleSignIn() async {
+    try {
+      await _googleSignIn.signIn();
+      // Handle login logic here
+    } catch (error) {
+      print(error);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Login')),
+      body: Center(
+        child: ElevatedButton(
+          onPressed: _handleSignIn,
+          child: const Text('Sign in with Google'),
+        ),
+      ),
+    );
+  }
+}
 ```
 
 ---
@@ -228,14 +256,15 @@ EXPOSE 8080
 ### 2. Create `Dockerfile` for Frontend
 ```dockerfile
 # Frontend Dockerfile
-FROM node:20
+FROM google/dart:stable
 WORKDIR /app
-COPY package*.json ./
-RUN npm install
+COPY pubspec.* ./
+RUN dart pub get
 COPY . .
-RUN npm run build
-EXPOSE 3000
-CMD ["npm", "start"]
+RUN dart pub global activate webdev
+RUN dart pub global run webdev build
+EXPOSE 8080
+CMD ["webdev", "serve", "--hostname", "0.0.0.0"]
 ```
 
 ### 3. Create `docker-compose.yml`
@@ -253,10 +282,11 @@ services:
     build:
       context: ./frontend
     ports:
-      - "3000:3000"
+      - "3000:8080"
 
 volumes:
   sqlite_data:
+    driver: local
 ```
 
 ---
@@ -279,7 +309,7 @@ Check `isxportfolio.db` file for user data.
 
 ## Future Steps
 1. **Extend Backend:** Add endpoints for portfolio management and news fetching.
-2. **Enhance Frontend:** Build dashboards and charts using `Chart.js`.
-3. **Mobile App:** Use React Native for a seamless transition.
+2. **Enhance Frontend:** Build dashboards and charts using `fl_chart`.
+3. **Mobile App:** The Flutter frontend is already cross-platform and ready for mobile deployment.
 4. **Deployment:** Use Kubernetes or Docker Swarm for scalable deployment.
 

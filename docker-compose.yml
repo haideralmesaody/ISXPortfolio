@@ -12,7 +12,16 @@ services:
       - backend/.env
     environment:
       - GIN_MODE=release
-    command: sh -c "env && ./main"
+
+  frontend:
+    build:
+      context: ./frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - API_URL=http://localhost:8000
+    depends_on:
+      - backend
 
 volumes:
   sqlite_data:

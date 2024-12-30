@@ -2,8 +2,8 @@ FROM golang:1.19-alpine
 
 WORKDIR /app
 
-# Install required system dependencies
-RUN apk add --no-cache gcc musl-dev
+# Install required system dependencies including sqlite
+RUN apk add --no-cache gcc musl-dev sqlite sqlite-dev
 
 # Copy go mod and sum files
 COPY go.mod ./
