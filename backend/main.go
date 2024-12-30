@@ -12,6 +12,7 @@ import (
 func main() {
 	// Initialize database
 	config.InitDB()
+	config.TestDatabaseWrite()
 
 	// Debug: Print environment variables
 	clientID := os.Getenv("GOOGLE_CLIENT_ID")
@@ -45,6 +46,7 @@ func main() {
 	// Auth routes
 	r.GET("/auth/google/login", handlers.GoogleLogin)
 	r.GET("/auth/callback", handlers.GoogleCallback)
+	r.GET("/auth/user", handlers.GetCurrentUser)
 
 	// Start server
 	r.Run(":8000")
