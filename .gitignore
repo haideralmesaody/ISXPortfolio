@@ -1,36 +1,15 @@
-# SQLite database
-*.db
-backend/data/
-
-# Go binaries and build files
-backend/main
-*.exe
-*.exe~
-*.dll
-*.so
-*.dylib
-
-# Go workspace files
-go.work
+# Flutter
+frontend/.dart_tool/
+frontend/build/
+frontend/.flutter-plugins
+frontend/.flutter-plugins-dependencies
 
 # Environment files
 .env
-*.env
 
-# IDE specific files
+# IDE
 .idea/
 .vscode/
-*.swp
-*.swo
 
-# OS specific files
-.DS_Store
-Thumbs.db
-
-# Flutter/Dart
-frontend/.dart_tool/
-frontend/.flutter-plugins
-frontend/.flutter-plugins-dependencies
-frontend/.packages
-frontend/build/
-frontend/.pub/ 
+# Docker
+.docker/ 

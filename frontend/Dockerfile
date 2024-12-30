@@ -42,10 +42,9 @@ RUN flutter clean && \
     flutter pub get && \
     flutter config --enable-web
 
-# Build web with specific settings
+# Build web with updated settings
 RUN flutter build web \
     --release \
-    --web-renderer html \
     --dart-define=FLUTTER_WEB_USE_SKIA=true
 
 # Stage 2 - Create the run-time image

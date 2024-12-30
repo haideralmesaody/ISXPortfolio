@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../services/auth_service.dart';
+import '../services/logger_service.dart';
 import '../widgets/app_header.dart';
 import '../widgets/app_footer.dart';
 
@@ -10,7 +11,10 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    LoggerService.debug('Building HomeScreen');
     final authService = context.watch<AuthService>();
+    LoggerService.debug('HomeScreen auth state: ${authService.isAuthenticated}');
+    LoggerService.debug('HomeScreen user: ${authService.userName}');
 
     return Scaffold(
       appBar: const AppHeader(),
@@ -106,7 +110,7 @@ class HomeScreen extends StatelessWidget {
                                     dotData: const FlDotData(show: false),
                                     belowBarData: BarAreaData(
                                       show: true,
-                                      color: Theme.of(context).primaryColor.withOpacity(0.1),
+                                      color: Theme.of(context).primaryColor.withAlpha(128),
                                     ),
                                   ),
                                 ],
@@ -126,7 +130,20 @@ class HomeScreen extends StatelessWidget {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          // TODO: Add new asset
+          // Implement asset addition
+          showDialog(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: const Text('Add New Asset'),
+              content: const Text('Asset addition will be implemented in future updates.'),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Close'),
+                ),
+              ],
+            ),
+          );
         },
         child: const Icon(Icons.add),
       ),
