@@ -1,5 +1,20 @@
 package main
 
+// Package Documentation
+// This is the main package for the ISX Portfolio backend.
+// It initializes the database, sets up the Gin router, and starts the server.
+// It also handles Google OAuth and JWT authentication.
+// It uses the Gin framework for routing and middleware.
+// It uses the GORM ORM for database operations.
+// It uses the GORM Migrator for database migrations.
+// It uses the GORM Logger for logging database operations.
+// It uses the GORM Config for database configuration.
+// It uses the GORM Dialect for database dialect.
+// It uses the GORM Debugger for debugging database operations.
+// It uses the GORM Validator for validating database operations.
+// It uses the GORM Validator for validating database operations.
+
+// Importing the necessary packages
 import (
 	"isxportfolio-backend/config"
 	"isxportfolio-backend/handlers"
@@ -9,9 +24,23 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// Main function
+// This is the main function for the ISX Portfolio backend.
+// It initializes the database, sets up the Gin router, and starts the server.
+// It also handles Google OAuth and JWT authentication.
+// It uses the Gin framework for routing and middleware.
+// It uses the GORM ORM for database operations.
+// It uses the GORM Migrator for database migrations.
+// It uses the GORM Logger for logging database operations.
+// It uses the GORM Config for database configuration.
+// It uses the GORM Dialect for database dialect.
+// It uses the GORM Debugger for debugging database operations.
+// It uses the GORM Validator for validating database operations.
+
 func main() {
 	// Initialize database
 	config.InitDB()
+
 	config.TestDatabaseWrite()
 
 	// Debug: Print environment variables
@@ -26,17 +55,18 @@ func main() {
 	// Create Gin router
 	r := gin.Default()
 
-	// CORS middleware
+	// Update CORS middleware
 	r.Use(func(c *gin.Context) {
 		c.Writer.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
-		c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
-		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
 		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
+		c.Writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With")
 
 		if c.Request.Method == "OPTIONS" {
 			c.AbortWithStatus(204)
 			return
 		}
+
 		c.Next()
 	})
 
@@ -47,6 +77,9 @@ func main() {
 	r.GET("/auth/google/login", handlers.GoogleLogin)
 	r.GET("/auth/callback", handlers.GoogleCallback)
 	r.GET("/auth/user", handlers.GetCurrentUser)
+
+	// Initialize JWT before starting the server
+	config.InitJWT()
 
 	// Start server
 	r.Run(":8000")

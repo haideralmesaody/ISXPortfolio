@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -29,7 +30,7 @@ func GoogleCallback(c *gin.Context) {
 	code := c.Query("code")
 	log.Printf("Received callback with code: %s", code)
 
-	token, err := config.GoogleOAuthConfig.Exchange(c, code)
+	oauthToken, err := config.GoogleOAuthConfig.Exchange(c, code)
 	if err != nil {
 		log.Printf("Token exchange error: %v", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to exchange token"})
@@ -37,7 +38,7 @@ func GoogleCallback(c *gin.Context) {
 	}
 	log.Printf("Successfully exchanged token")
 
-	client := config.GoogleOAuthConfig.Client(c, token)
+	client := config.GoogleOAuthConfig.Client(c, oauthToken)
 	userInfo, err := client.Get("https://www.googleapis.com/oauth2/v2/userinfo")
 	if err != nil {
 		log.Printf("Failed to get user info: %v", err)
@@ -86,10 +87,36 @@ func GoogleCallback(c *gin.Context) {
 	}
 	log.Printf("Successfully saved user to database")
 
-	c.JSON(http.StatusOK, gin.H{
+	// Generate JWT token
+	jwtToken := config.GenerateJWTToken(googleUser.Email)
+
+	// Return response with HTML that calls parent window
+	data := gin.H{
 		"email": googleUser.Email,
 		"name":  googleUser.Name,
-	})
+		"token": jwtToken,
+	}
+
+	jsonData, _ := json.Marshal(data)
+	html := `
+	<!DOCTYPE html>
+	<html>
+		<script>
+			try {
+				window.opener.postMessage({
+					type: 'oauth-completion',
+					data: %s
+				}, 'http://localhost:3000');
+				window.close();
+			} catch (e) {
+				console.error('Failed to communicate with main window:', e);
+				document.body.innerHTML = 'Please return to the main application window.';
+			}
+		</script>
+	</html>`
+
+	c.Header("Content-Type", "text/html")
+	c.String(http.StatusOK, fmt.Sprintf(html, string(jsonData)))
 }
 
 func GetCurrentUser(c *gin.Context) {

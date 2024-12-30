@@ -1,41 +1,68 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';  // For ChangeNotifier
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+// ignore: avoid_web_libraries_in_flutter
+import 'dart:html' as html;
 import '../config/api_config.dart';
-import 'package:url_launcher/url_launcher.dart' as url_launcher;
+import 'logger_service.dart';
+import 'url_launcher_service.dart';
+import 'navigation_service.dart';
 
 class AuthService extends ChangeNotifier {
+  final UrlLauncherService _urlLauncher = UrlLauncherService();
+  
   bool _isAuthenticated = false;
   String? _userEmail;
   String? _userName;
+  String? _token;
 
+  // Getters
   bool get isAuthenticated => _isAuthenticated;
   String? get userEmail => _userEmail;
   String? get userName => _userName;
+  String? get token => _token;
 
-  Future<void> initiateGoogleLogin() async {
-    try {
-      final response = await http.get(Uri.parse('${ApiConfig.baseUrl}/auth/google/login'));
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        final url = Uri.parse(data['redirect_url']);
-        
-        if (await url_launcher.canLaunchUrl(url)) {
-          await url_launcher.launchUrl(
-            url,
-            mode: url_launcher.LaunchMode.platformDefault,
-          );
-        } else {
-          print('Could not launch $url');
+  AuthService() {
+    if (kIsWeb) {
+      // Listen for messages from popup
+      html.window.onMessage.listen((event) {
+        if (event.data['type'] == 'oauth-completion') {
+          final data = event.data['data'];
+          _userEmail = data['email'];
+          _userName = data['name'];
+          _token = data['token'];
+          _isAuthenticated = true;
+          notifyListeners();
+          NavigationService.navigateTo('/home');
         }
-      }
-    } catch (e) {
-      print('Error initiating Google login: $e');
+      });
     }
   }
 
-  Future<void> handleAuthCallback(String code) async {
+  Future<void> initiateGoogleLogin() async {
     try {
+      LoggerService.debug('Starting Google login process');
+      final response = await http.get(Uri.parse('${ApiConfig.baseUrl}/auth/google/login'));
+      
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final url = data['redirect_url'];
+        
+        LoggerService.debug('Redirecting to Google OAuth URL: $url');
+        await _urlLauncher.launch(url);
+      } else {
+        LoggerService.debug('Failed to get OAuth URL: ${response.statusCode}');
+      }
+    } catch (e) {
+      LoggerService.error('Login error', e);
+    }
+  }
+
+  Future<bool> handleAuthCallback(String code) async {
+    try {
+      LoggerService.debug('Handling auth callback with code: ${code.substring(0, 10)}...');
+      
       final response = await http.get(
         Uri.parse('${ApiConfig.baseUrl}/auth/callback?code=$code'),
       );
@@ -44,13 +71,17 @@ class AuthService extends ChangeNotifier {
         final data = json.decode(response.body);
         _userEmail = data['email'];
         _userName = data['name'];
+        _token = data['token'];
         _isAuthenticated = true;
+        
+        LoggerService.debug('Auth successful - User: $_userName');
         notifyListeners();
-      } else {
-        print('Error in callback: ${response.body}');
+        return true;
       }
+      return false;
     } catch (e) {
-      print('Error handling callback: $e');
+      LoggerService.error('Auth callback error', e);
+      return false;
     }
   }
 
@@ -58,6 +89,7 @@ class AuthService extends ChangeNotifier {
     _isAuthenticated = false;
     _userEmail = null;
     _userName = null;
+    _token = null;
     notifyListeners();
   }
-} 
+}
