@@ -1,15 +1,27 @@
-# Flutter
-frontend/.dart_tool/
+# Environment files
+.env
+docker-compose.yml
+docker-compose.*.yml
+
+# News data
+backend/data/pdfs/
+backend/data/*.csv
+
+# IDE files
+.idea/
+.vscode/
+*.iml
+
+# Compiled files
+backend/main
 frontend/build/
+frontend/.dart_tool/
 frontend/.flutter-plugins
 frontend/.flutter-plugins-dependencies
 
-# Environment files
-.env
+# Logs
+*.log
 
-# IDE
-.idea/
-.vscode/
-
-# Docker
-.docker/ 
+# OS files
+.DS_Store
+Thumbs.db 
