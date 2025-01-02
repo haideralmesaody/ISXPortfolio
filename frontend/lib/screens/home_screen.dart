@@ -5,6 +5,7 @@ import '../services/auth_service.dart';
 import '../services/logger_service.dart';
 import '../widgets/app_header.dart';
 import '../widgets/app_footer.dart';
+import '../widgets/market/news_section.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -121,6 +122,7 @@ class HomeScreen extends StatelessWidget {
                       ),
                     ),
                   ),
+                  NewsSection(),
                 ],
               ),
             ),

@@ -18,6 +18,7 @@ package main
 import (
 	"isxportfolio-backend/config"
 	"isxportfolio-backend/handlers"
+	"isxportfolio-backend/jobs"
 	"log"
 	"os"
 
@@ -70,6 +71,11 @@ func main() {
 		c.Next()
 	})
 
+	// Initialize and start the market news job
+	newsJob := jobs.NewMarketNewsJob()
+	newsJob.Start()
+	defer newsJob.Stop()
+
 	// Health check endpoint
 	r.GET("/health", handlers.HealthCheck)
 
@@ -81,6 +87,24 @@ func main() {
 	// Initialize JWT before starting the server
 	config.InitJWT()
 
+	// Setup routes
+	setupRoutes(r)
+
 	// Start server
 	r.Run(":8000")
+}
+
+func setupRoutes(r *gin.Engine) {
+	api := r.Group("/api")
+	{
+		// Your existing routes...
+
+		// Market news routes
+		market := api.Group("/market")
+		{
+			newsHandler := handlers.NewMarketNewsHandler()
+			market.GET("/news", newsHandler.GetMarketNews)
+			market.POST("/news/refresh", newsHandler.RefreshMarketNews)
+		}
+	}
 }
